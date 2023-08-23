@@ -10,21 +10,38 @@ import SwiftUI
 struct EmojiMemoryGameView: View {
     @ObservedObject var gameViewModel: EmojiMemoryGame
     
-    //    let winterEmojis: [String] = ["🥶", "🥶", "❄️", "❄️", "☃️", "☃️", "🧣", "🧣", "🏂", "🏂", "🎅", "🎅", "🌨️", "🌨️", "🧤", "🧤", "🎿", "🎿", "⛸️", "⛸️", "🤧", "🤧", "🛷", "🛷"]
-    //    let fruitsEmojis: [String] = ["🍒", "🍒", "🍓", "🍓", "🍇", "🍇", "🥑", "🥑", "🍎", "🍎", "🍉", "🍉", "🍑", "🍑", "🍋", "🍋", "🥝", "🥝", "🫐", "🫐", "🍌", "🍌", "🍐", "🍐"]
-    
-    @State var cardCount: Int = 24
-    
     var body: some View {
         VStack {
-            Text("Memorize!").font(.largeTitle).padding(.bottom)
+            Text("🏆 " + String(gameViewModel.score)).font(.largeTitle).padding(.bottom)
+            if gameViewModel.gameEnded {
+                Text("Congratulations!").font(.largeTitle)
+                Button(action: {
+                    gameViewModel.startNewGame(themes: EmojiMemoryGame.predefinedSetOfGameThemes)
+                }, label:
+                        {
+                    VStack {
+                        Image(systemName: "arrow.clockwise.circle").imageScale(.large).font(.largeTitle)
+                        Text("New Game")
+                    }.padding(.top)
+                }
+                )
+            }
             ScrollView {
                 cards
                     .animation(.default, value: gameViewModel.cards)
             }
             Spacer()
-            Button("Shuffle") {
-                gameViewModel.shuffle()
+            if !gameViewModel.gameEnded {
+                Button(action: {
+                    gameViewModel.startNewGame(themes: EmojiMemoryGame.predefinedSetOfGameThemes)
+                }, label:
+                        {
+                    VStack {
+                        Image(systemName: "arrow.clockwise.circle").imageScale(.large).font(.largeTitle)
+                        Text("Reset Game")
+                    }.padding(.top)
+                }
+                )
             }
         }
         .padding()
@@ -42,7 +59,7 @@ struct EmojiMemoryGameView: View {
                     }
             }
         }
-        .foregroundColor(.red)
+        
     }
 }
 
@@ -59,11 +76,20 @@ struct CardView: View {
         self.card = card
     }
     
+    func getColor() -> Color {
+        switch card.bgColor {
+        case "blue": return .blue
+        case "red": return .red
+        case "green": return .green
+        default: return .black
+        }
+    }
+    
     var body: some View {
         ZStack {
             let base = RoundedRectangle(cornerRadius: 12)
             Group {
-                base.fill(.white)
+                base.fill((card.isMatched ? .mint : .white))
                 base.strokeBorder(lineWidth: 2)
                 Text(card.content).font(.system(size: 200))
                     .minimumScaleFactor(0.01)
@@ -71,6 +97,7 @@ struct CardView: View {
             }
             .opacity(card.isFaceUp ? 1 : 0)
             base.fill().opacity(card.isFaceUp ? 0 : 1)
+                .foregroundColor(getColor())
         }
         .opacity(card.isFaceUp || !card.isMatched ? 1 : 0)
     }

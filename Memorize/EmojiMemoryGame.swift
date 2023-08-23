@@ -11,27 +11,47 @@ import SwiftUI
 
 class EmojiMemoryGame: ObservableObject {
     // Mark initializing shit used in other initializers as static & private to not pollute global namespace
-    private static let halloweenEmojis = ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙", "🙀", "👹", "😱", "☠️", "🍭"]
+    private static let defaultGameTheme = GameTheme(emojis: ["👻", "🎃", "🕷️", "😈", "💀", "🕸️", "🧙", "🙀", "👹", "😱", "☠️", "🍭"], color: "red")
     
-    private static func createMemoryGame() -> MemoryGame<String> {
-        return MemoryGame(numberOfPairsOfCards: 12) { pairIndex in
-            if halloweenEmojis.indices.contains(pairIndex) {
-                return halloweenEmojis[pairIndex]
+    private static func createMemoryGame(gameThemes: [GameTheme]) -> MemoryGame<String> {
+        let gameTheme = gameThemes.randomElement() ?? defaultGameTheme
+        return MemoryGame(numberOfPairsOfCards: 10) { pairIndex in
+            if gameTheme.emojis.indices.contains(pairIndex) {
+                return (gameTheme.emojis[pairIndex], gameTheme.color)
             } else {
-                return "⁉️"
+                return ("⁉️", gameTheme.color)
             }
         }
     }
     
-    @Published private var gameModel = createMemoryGame()
+    static let predefinedSetOfGameThemes = [
+        defaultGameTheme,
+        GameTheme(emojis: ["🥶", "❄️", "☃️", "🧣", "🏂", "🎅", "🌨️", "🧤", "🎿", "⛸️", "🤧", "🛷"], color: "blue"),
+        GameTheme(emojis: ["🍒", "🍓", "🍇", "🥑", "🍎", "🍉", "🍑", "🍋", "🥝", "🫐", "🍌", "🍐"], color: "green")
+    ]
+    
+    @Published private var gameModel = createMemoryGame(gameThemes: predefinedSetOfGameThemes)
     
     var cards: Array<MemoryGame<String>.Card> {
         return gameModel.cards
     }
     
-    // MARK: - Intents
+    var score: Int {
+        return gameModel.score
+    }
     
-    func shuffle() {
+    var gameEnded: Bool {
+        return gameModel.gameEnded
+    }
+    
+    struct GameTheme {
+        let emojis: [String]
+        let color: String
+    }
+    
+    // MARK: - Intents
+    func startNewGame(themes gameThemes: [GameTheme]) {
+        gameModel = EmojiMemoryGame.createMemoryGame(gameThemes: gameThemes)
         gameModel.shuffle()
     }
     
